@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="./animate.css">
+  <style>
+    *{margin: 0;padding: 0;}
+    ul{list-style: none;}
+    body{background: black;}
+    ul li{float: left;width: 100px;height: 100px;overflow: hidden;}
+    .large{width: 100%;height: 100%;position: absolute;top: 0;left: 0;z-index: 10;background: black;}
+  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Gallery</title>
+  <script src="./zepto.min.js"></script>
+</head>
+<body>
+  <ul id="container" class="img-container">
+  </ul>
+  <div id="large_container" class="large animated fadeIn" style="display:none;">
+    <img id="large_img">
+  </div>
+  <script>
+    var total=17;
+    var zWin=$(window);
+    var render=function(){
+      var padding=2;
+      var winWidth=zWin.width();
+      var picWidth=Math.floor((winWidth-padding*3)/4);
+      var tmpl="";
+      for(var i=1;i<=total;i++){
+        var p=padding;
+        var imgSrc="img/"+i+".jpg";
+        if(i%4==1){
+          p=0;
+        }
+        tmpl+='<li data-id="'+i+'" class="animated bounceIn" style="width:'+picWidth+'px;height:'+picWidth+'px;padding-top:'+padding+'px;padding-left:'+p+'px;"><canvas id="cvs_'+i+'"></canvas></li>';
+
+        var oImg=new Image();
+        oImg.index=i;
+        oImg.onload=function(){
+          var cvs=$("#cvs_"+this.index)[0].getContext('2d');
+          cvs.width=this.width;
+          cvs.height=this.height;
+          cvs.drawImage(this,0,0);
+        }
+        oImg.src=imgSrc;
+      }
+      $("#container").html(tmpl);
+    }
+    render();
+    var LImg=$("#large_img");
+    var domImage=LImg[0];
+    var loadImg=function(id,callback){
+      $('#large_container').css({width:zWin.width(),height:zWin.height()}).show();
+      var imgSrc='img/'+id+'.large.jpg';
+      var oImg=new Image();
+      oImg.onload=function(){
+        var w=this.width;
+        var h=this.height;
+        var winWidth=zWin.width();
+        var winHeight=zWin.height();
+        var realw=winHeight*w/h;
+        var realh=winWidth*h/w;
+        var paddingLeft=parseInt((winWidth-realw)/2);
+        var paddingTop=parseInt((winHeight-realh)/2); 
+        LImg.css('width','auto').css('height','auto');
+        LImg.css('padding-left','0px').css('padding-top','0px');       
+        if(h/w>1.2){
+          LImg.attr('src',imgSrc).css('height',winHeight).css('padding-left',paddingLeft);
+        }
+        else{
+          LImg.attr('src',imgSrc).css('width',winWidth).css('padding-top',paddingTop);          
+        }
+        callback&&callback();
+      }
+      oImg.src=imgSrc;
+    }
+
+    var cid;
+    $("#container").delegate('li','tap',function(){
+      var _id=cid=$(this).attr('data-id');
+      loadImg(_id);
+    })
+    $("#large_container").tap(function(){
+      $(this).hide();
+    }).swipeLeft(function(){
+      cid++;
+      if(cid>total){
+        cid=total;
+      }
+      else{
+        loadImg(cid,function(){
+          domImage.addEventListener('webkitAnimationEnd',function(){
+            LImg.removeClass('animated bounceInRight');
+          },false)
+          LImg.addClass('animated bounceInRight');
+        });
+      }
+    }).swipeRight(function(){
+      cid--;
+      if(cid<1){
+        cid=1;
+      }
+      else{
+        loadImg(cid,function(){
+          domImage.addEventListener('webkitAnimationEnd',function(){
+            LImg.removeClass('animated bounceInLeft');
+          },false)
+          LImg.addClass('animated bounceInLeft');
+        });
+      }
+    })
+  </script>
+</body>
+</html>
